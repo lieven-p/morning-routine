@@ -1,9 +1,11 @@
-import { copy } from './ui/copy.nl-BE.ts'
+import type { Clock, Repository } from './app/ports.ts'
+import { AppContext } from './ui/app-context.ts'
+import { KidsShell } from './ui/kids/KidsShell.tsx'
 
-export default function App() {
+export default function App({ repository, clock }: { repository: Repository; clock: Clock }) {
   return (
-    <main className="app">
-      <h1>{copy.appName}</h1>
-    </main>
+    <AppContext.Provider value={{ repository, clock }}>
+      <KidsShell />
+    </AppContext.Provider>
   )
 }

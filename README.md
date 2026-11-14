@@ -25,7 +25,9 @@ If `npm install` aborts with `ECONNRESET` behind a registry mirror, use `--maxso
 
 All fixed text comes from `src/ui/copy.nl-BE.ts`.
 
-Persistence goes through the `Repository` port in `src/app/ports.ts`; its Dexie implementation lives in `src/adapters/db/` (schema version 1, database `morning-routine`).
+Persistence goes through the `Repository` port in `src/app/ports.ts`; its Dexie implementation lives in `src/adapters/db/` (schema version 1, database `morning-routine`). Time comes from the `Clock` port (`src/adapters/device/clock.ts`).
+
+The children's shell (`src/ui/kids/`) reads live data with `dexie-react-hooks` and issues only the session commands in `src/app/session-commands.ts`. On first open into an empty database, `src/app/sample-data.ts` writes a stand-in family (story 9 replaces it with the first-run flow). To time-travel in a browser, use Playwright's `page.clock`.
 
 ## Deploy
 

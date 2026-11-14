@@ -1,0 +1,490 @@
+/* DESIGN.md tokens (Avonturenpad) as custom properties; shapes and sizes follow the 1024 × 640 reference canvas. */
+:root {
+  --sky-top: #bfe6f5;
+  --sky-horizon: #e9f7fb;
+  --meadow-light: #a9d88a;
+  --meadow: #8cc66b;
+  --hill: #6faf55;
+  --hill-light: #79b95e;
+  --forest: #2f6b3a;
+  --ink: #2f4a2b;
+  --path-sand: #e8c98a;
+  --stone: #f3eee2;
+  --stone-highlight: #ffffff;
+  --stone-shade: #d9d0bc;
+  --stone-ledge: #b9ae95;
+  --stone-done-light: #e9f7e2;
+  --stone-done: #b9dda4;
+  --flower-green: #4e9a4a;
+  --wood: #a9744f;
+  --wood-dark: #7a5235;
+  --cream: #fff5e1;
+  --label-bg: #fffaec;
+  --sun-gold: #ffc94a;
+  --sun-gold-dark: #c99a1e;
+  --play-icon: #5a3e1b;
+  --parent-meta: #5a6f55;
+  --white: #ffffff;
+  --rounded-sm: 8px;
+  --rounded-md: 10px;
+  --rounded-lg: 14px;
+  --rounded-xl: 24px;
+  --font-child: 'Trebuchet MS', system-ui, sans-serif;
+  --font-parent: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+.kids-viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(var(--meadow-light), var(--meadow));
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.kids-canvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1024px;
+  height: 640px;
+  transform-origin: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  font-family: var(--font-child);
+  font-weight: 700;
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse 70% 40% at 20% 100%, var(--hill) 0 60%, transparent 61%),
+    radial-gradient(ellipse 80% 45% at 85% 100%, var(--hill-light) 0 60%, transparent 61%),
+    linear-gradient(var(--sky-top) 0, var(--sky-horizon) 17%, var(--meadow-light) 18%, var(--meadow) 100%);
+}
+
+:where(.kids-canvas button) {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.kids-paths {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.kids-trail {
+  fill: none;
+  stroke: var(--path-sand);
+  stroke-width: 18;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.kids-trail-dots {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 3;
+  stroke-dasharray: 2 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.kids-trail-departure {
+  fill: none;
+  stroke: var(--sun-gold);
+  stroke-width: 7;
+  stroke-dasharray: 14 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.kids-lane {
+  fill: none;
+  stroke: var(--path-sand);
+  stroke-width: 46;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+.kids-lane.faint {
+  opacity: 0.55;
+}
+
+.kids-sign {
+  position: absolute;
+  left: 20px;
+  top: 76px;
+  z-index: 4;
+  padding: 5px 12px;
+  border-radius: var(--rounded-sm);
+  background: var(--wood);
+  color: var(--cream);
+  font-size: 18px;
+  box-shadow: 0 4px 0 var(--wood-dark);
+  white-space: nowrap;
+}
+
+.kids-flag {
+  position: absolute;
+  z-index: 3;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  border: 3px solid var(--wood);
+  border-radius: var(--rounded-md);
+  background: var(--cream);
+  font-size: 18px;
+}
+
+.kids-flag::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 4px;
+  height: 14px;
+  margin-left: -2px;
+  background: var(--wood-dark);
+}
+
+.kids-car {
+  position: absolute;
+  left: 940px;
+  top: 322px;
+  z-index: 3;
+  font-size: 60px;
+}
+
+.kids-car.faint {
+  left: 840px;
+  top: 470px;
+  font-size: 44px;
+  opacity: 0.75;
+}
+
+.kids-walker {
+  position: absolute;
+  z-index: 4;
+  font-size: 46px;
+  line-height: 1;
+  transform: translateX(-50%);
+  transition:
+    left 1s linear,
+    top 1s linear;
+}
+
+.kids-walker.asleep .kids-walker-animal {
+  display: inline-block;
+  opacity: 0.8;
+  filter: grayscale(0.4);
+  transform: rotate(-12deg) translateY(8px);
+}
+
+.kids-sleep {
+  position: absolute;
+  right: -14px;
+  top: -10px;
+  font-size: 24px;
+}
+
+.kids-calm {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.kids-plank {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 16px 5px 5px;
+  border-radius: 9999px;
+  background: var(--wood);
+  color: var(--cream);
+  font-size: 19px;
+  box-shadow: 0 4px 0 var(--wood-dark);
+}
+
+.kids-plank.centred {
+  left: 50%;
+  top: 36px;
+  transform: translateX(-50%);
+  padding-right: 5px;
+}
+
+.kids-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  box-sizing: border-box;
+  border: 3px solid var(--wood-dark);
+  border-radius: 50%;
+  background: var(--cream);
+  font-size: 25px;
+}
+
+.kids-stone {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 30%, var(--stone-highlight) 0, var(--stone) 60%, var(--stone-shade) 100%);
+  box-shadow: 0 7px 0 var(--stone-ledge);
+  font-size: 52px;
+}
+
+.kids-stone.done {
+  background: radial-gradient(circle at 40% 30%, var(--stone-done-light) 0, var(--stone-done) 70%);
+  box-shadow: 0 7px 0 var(--flower-green);
+}
+
+.kids-stone-picture {
+  line-height: 1;
+}
+
+.kids-stone-label {
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 9px;
+  border-radius: var(--rounded-md);
+  background: rgb(255 250 236 / 92%);
+  color: var(--ink);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.kids-flower {
+  position: absolute;
+  top: -14px;
+  right: -6px;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.kids-marker {
+  position: absolute;
+  top: -30px;
+  left: -24px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  box-sizing: border-box;
+  border: 3px solid var(--wood-dark);
+  border-radius: 50%;
+  background: var(--cream);
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* The button is a transparent touch target, at least 48 CSS px on screen, centred on its green face. */
+.kids-done-button {
+  position: absolute;
+  left: 104px;
+  top: 8px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: max(52px, var(--hit-min, 48px));
+  height: max(52px, var(--hit-min, 48px));
+  transform: translate(-50%, -50%);
+}
+
+.kids-done-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  box-sizing: border-box;
+  border: 3px solid var(--white);
+  border-radius: var(--rounded-lg);
+  background: var(--flower-green);
+  box-shadow: 0 4px 0 var(--forest);
+}
+
+.kids-tiles {
+  position: absolute;
+  left: 42px;
+  top: 120px;
+  display: grid;
+  grid-template-columns: repeat(6, 140px);
+  gap: 20px;
+}
+
+.kids-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 180px;
+  box-sizing: border-box;
+  border: 4px solid var(--wood);
+  border-radius: var(--rounded-xl);
+  background: var(--cream);
+  box-shadow: 0 6px 0 var(--wood-dark);
+  font-size: 80px;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+
+.kids-tile-animal {
+  line-height: 1.1;
+}
+
+.kids-tile-label {
+  margin-top: 2px;
+  color: var(--wood-dark);
+  font-size: 15px;
+}
+
+.kids-tile.selected {
+  z-index: 2;
+  border: 6px solid var(--sun-gold);
+  box-shadow:
+    0 6px 0 var(--sun-gold-dark),
+    0 0 40px 12px rgb(255 201 74 / 85%);
+  transform: scale(1.06);
+}
+
+.kids-tile.dimmed {
+  opacity: 0.4;
+}
+
+.kids-pad {
+  position: absolute;
+  left: 110px;
+  top: 470px;
+  z-index: 2;
+  width: 96px;
+  height: 96px;
+  box-sizing: border-box;
+  border: 4px dashed var(--white);
+  border-radius: 50%;
+  background: rgb(255 245 225 / 55%);
+}
+
+.kids-pad.on {
+  border: 4px solid var(--sun-gold);
+  background: var(--cream);
+  box-shadow: 0 0 40px 12px rgb(255 201 74 / 80%);
+}
+
+.kids-mini {
+  position: absolute;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--stone);
+  box-shadow: 0 4px 0 var(--stone-ledge);
+  opacity: 0.7;
+}
+
+.kids-hop {
+  position: absolute;
+  z-index: 6;
+  font-size: 62px;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  animation: kids-hop 0.7s ease-out;
+}
+
+@keyframes kids-hop {
+  0% {
+    transform: translate(calc(-50% + var(--hop-x)), calc(-50% + var(--hop-y)));
+  }
+  55% {
+    transform: translate(calc(-50% + var(--hop-x) * 0.4), calc(-50% + var(--hop-y) * 0.4 - 90px));
+  }
+  100% {
+    transform: translate(-50%, -50%);
+  }
+}
+
+.kids-sparkle {
+  position: absolute;
+  z-index: 6;
+  font-size: 26px;
+  animation: kids-sparkle 1.2s ease-out 0.55s both;
+}
+
+@keyframes kids-sparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+.kids-departure-time {
+  position: absolute;
+  left: 830px;
+  top: 540px;
+  z-index: 3;
+  color: var(--parent-meta);
+  font-family: var(--font-parent);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* The big play button is a 110 px target, so it needs no extra hit area. */
+.kids-play-big {
+  position: absolute;
+  left: 870px;
+  top: 330px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 110px;
+  height: 110px;
+  box-sizing: border-box;
+  border: 5px solid var(--white);
+  border-radius: 50%;
+  background: var(--sun-gold);
+  box-shadow: 0 7px 0 var(--sun-gold-dark);
+}
+
+.kids-play-big::before {
+  content: '';
+  margin-left: 10px;
+  border-top: 25px solid transparent;
+  border-bottom: 25px solid transparent;
+  border-left: 40px solid var(--play-icon);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kids-hop,
+  .kids-sparkle,
+  .kids-walker {
+    animation: none;
+    transition: none;
+  }
+}

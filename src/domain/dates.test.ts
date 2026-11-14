@@ -1,5 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { localTimeMs, parseDate, weekdayOf } from './dates.ts'
+import { localDateString, localTimeMs, parseDate, weekdayOf } from './dates.ts'
+
+describe('localDateString', () => {
+  it('gives the local date, zero-padded', () => {
+    expect(localDateString(new Date(2026, 0, 5, 12).getTime())).toBe('2026-01-05')
+    expect(localDateString(new Date(2026, 10, 14, 21, 40).getTime())).toBe('2026-11-14')
+  })
+
+  it('switches exactly at local midnight', () => {
+    expect(localDateString(new Date(2026, 10, 14, 23, 59, 59, 999).getTime())).toBe('2026-11-14')
+    expect(localDateString(new Date(2026, 10, 15, 0, 0, 0, 0).getTime())).toBe('2026-11-15')
+    expect(localDateString(new Date(2026, 11, 31, 23, 59).getTime())).toBe('2026-12-31')
+    expect(localDateString(new Date(2027, 0, 1, 0, 0).getTime())).toBe('2027-01-01')
+  })
+
+  it('round-trips with localTimeMs', () => {
+    expect(localDateString(localTimeMs('2026-11-16', '00:00'))).toBe('2026-11-16')
+    expect(localDateString(localTimeMs('2026-11-16', '23:59'))).toBe('2026-11-16')
+  })
+})
 
 describe('localTimeMs', () => {
   it('builds epoch ms from local date and time', () => {

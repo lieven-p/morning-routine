@@ -58,3 +58,8 @@ export interface Repository {
   putMedia(record: MediaRecord): Promise<void>
   deleteMedia(id: string): Promise<void>
 }
+
+/** The one source of time (AD-1, AD-6): epoch ms. */
+export interface Clock {
+  now(): number
+}

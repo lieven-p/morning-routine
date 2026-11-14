@@ -13,13 +13,9 @@ body,
 }
 
 body {
+  overflow: hidden;
+  overscroll-behavior: none;
   background: linear-gradient(var(--sky-top), var(--sky-horizon));
   color: var(--ink);
   font-family: system-ui, sans-serif;
-}
-
-.app {
-  display: grid;
-  place-items: center;
-  height: 100%;
 }

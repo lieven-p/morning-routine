@@ -43,6 +43,15 @@ export function localTimeMs(date: DateString, time: TimeString): number {
   return new Date(year, month - 1, day, hour, minute).getTime()
 }
 
+/** Local calendar date, zero-padded `YYYY-MM-DD`, of an epoch ms in the device's time zone. */
+export function localDateString(epochMs: number): DateString {
+  const moment = new Date(epochMs)
+  const year = String(moment.getFullYear()).padStart(4, '0')
+  const month = String(moment.getMonth() + 1).padStart(2, '0')
+  const day = String(moment.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 /** Days since 1970-01-01 in the proleptic Gregorian calendar; pure arithmetic, no time zone. */
 function daysSinceEpoch({ year, month, day }: DateParts): number {
   const y = month <= 2 ? year - 1 : year
