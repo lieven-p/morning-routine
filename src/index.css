@@ -1,0 +1,25 @@
+:root {
+  --sky-top: #bfe6f5;
+  --sky-horizon: #e9f7fb;
+  --meadow: #8cc66b;
+  --ink: #2f4a2b;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: linear-gradient(var(--sky-top), var(--sky-horizon));
+  color: var(--ink);
+  font-family: system-ui, sans-serif;
+}
+
+.app {
+  display: grid;
+  place-items: center;
+  height: 100%;
+}

@@ -1,0 +1,154 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc"],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+  },
+  "overrides": [
+    {
+      "files": ["src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "dexie",
+                "message": "Only src/adapters/db may import dexie (AD-2)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/domain/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^[^.]",
+                "message": "domain imports only domain: no packages (AD-1, AD-19)."
+              },
+              {
+                "regex": "^(\\.\\./)+(app|adapters|ui)(/|$)",
+                "message": "domain imports only domain (AD-19)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/app/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "dexie",
+                "message": "Only src/adapters/db may import dexie (AD-2)."
+              }
+            ],
+            "patterns": [
+              {
+                "regex": "^(\\.\\./)+(adapters|ui)(/|$)",
+                "message": "app imports only domain (AD-19)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/adapters/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "dexie",
+                "message": "Only src/adapters/db may import dexie (AD-2)."
+              }
+            ],
+            "patterns": [
+              {
+                "regex": "^(\\.\\./)+ui(/|$)",
+                "message": "adapters must not import ui (AD-19)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/adapters/db/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^(\\.\\./)+ui(/|$)",
+                "message": "adapters must not import ui (AD-19)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/ui/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "dexie",
+                "message": "Only src/adapters/db may import dexie (AD-2)."
+              }
+            ],
+            "patterns": [
+              {
+                "regex": "^(\\.\\./)+adapters(/|$)",
+                "message": "ui reaches adapters only through app (AD-19)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/ui/kids/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "dexie",
+                "message": "Only src/adapters/db may import dexie (AD-2)."
+              }
+            ],
+            "patterns": [
+              {
+                "regex": "^(\\.\\./)+adapters(/|$)",
+                "message": "ui reaches adapters only through app (AD-19)."
+              },
+              {
+                "regex": "^(\\.\\./)+(ui/)?parent(/|$)",
+                "message": "ui/kids must not import ui/parent (AD-10, AD-19)."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
