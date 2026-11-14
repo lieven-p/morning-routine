@@ -1,4 +1,4 @@
-import type { DateString, Weekday } from './types.ts'
+import type { DateString, TimeString, Weekday } from './types.ts'
 
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 
@@ -28,6 +28,19 @@ export function parseDate(date: DateString): DateParts {
     throw new RangeError(`Invalid calendar date: ${date}`)
   }
   return { year, month, day }
+}
+
+const TIME_PATTERN = /^(\d{2}):(\d{2})$/
+
+/** Epoch ms of a local calendar date at a strict `HH:mm` time in the device's time zone. Throws `RangeError` otherwise. */
+export function localTimeMs(date: DateString, time: TimeString): number {
+  const { year, month, day } = parseDate(date)
+  const match = typeof time === 'string' ? TIME_PATTERN.exec(time) : null
+  if (!match) throw new RangeError(`Invalid time, expected HH:mm: ${String(time)}`)
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (hour > 23 || minute > 59) throw new RangeError(`Invalid time of day: ${time}`)
+  return new Date(year, month - 1, day, hour, minute).getTime()
 }
 
 /** Days since 1970-01-01 in the proleptic Gregorian calendar; pure arithmetic, no time zone. */

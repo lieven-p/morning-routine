@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { parseDate, weekdayOf } from './dates.ts'
+import { localTimeMs, parseDate, weekdayOf } from './dates.ts'
+
+describe('localTimeMs', () => {
+  it('builds epoch ms from local date and time', () => {
+    expect(localTimeMs('2026-11-16', '08:05')).toBe(new Date(2026, 10, 16, 8, 5).getTime())
+    expect(localTimeMs('2026-11-16', '00:00')).toBe(new Date(2026, 10, 16).getTime())
+    expect(localTimeMs('2026-11-16', '23:59')).toBe(new Date(2026, 10, 16, 23, 59).getTime())
+  })
+
+  it('is one minute per minute within a day', () => {
+    expect(localTimeMs('2026-11-16', '08:05') - localTimeMs('2026-11-16', '08:00')).toBe(5 * 60_000)
+  })
+
+  it.each(['8:05', '08:5', '24:00', '12:60', '08:05:00', ' 08:05', '', '0805', '-1:00'])('throws RangeError for time %j', (time) => {
+    expect(() => localTimeMs('2026-11-16', time)).toThrow(RangeError)
+  })
+
+  it.each(['2026-02-30', '16-11-2026', ''])('throws RangeError for date %j', (date) => {
+    expect(() => localTimeMs(date, '08:00')).toThrow(RangeError)
+  })
+})
 
 describe('weekdayOf', () => {
   it('returns ISO weekdays for a known week (2026-11-16 is a Monday)', () => {
