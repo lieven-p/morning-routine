@@ -1,0 +1,15 @@
+node_modules
+dist
+dist-ssr
+*.local
+*.log
+.DS_Store
+
+# Planning and tooling, kept out of the public repository
+INTENT.md
+bmad/
+_bmad/
+.agents/
+.github/agents/
+.vscode/
+.idea/
