@@ -69,6 +69,32 @@ export interface DayOverride {
   departure?: TimeString
 }
 
+/** A day that runs a routine, after weekday limits and the one-day override (AD-5). */
+export interface DayPlan {
+  kind: 'session'
+  date: DateString
+  routineId: string
+  routineName: string
+  start: TimeString
+  departure: TimeString
+  soundOn: boolean
+  tasks: readonly Task[]
+}
+
+/**
+ * Why a date has no session: "Geen school", "Geen sessie", nothing planned (unplanned weekend or no default
+ * routine), or the chosen routine id does not exist.
+ */
+export type NoSessionReason = 'noSchool' | 'noSession' | 'noPlan' | 'routineMissing'
+
+export interface NoSession {
+  kind: 'none'
+  date: DateString
+  reason: NoSessionReason
+}
+
+export type ResolvedDay = DayPlan | NoSession
+
 export interface Stone {
   /** Unique within its snapshot. */
   stoneId: string
