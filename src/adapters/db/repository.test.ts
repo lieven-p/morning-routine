@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto'
 import Dexie, { liveQuery } from 'dexie'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { DaySnapshot, Routine, Task } from '../../domain/types.ts'
-import { DATABASE_NAME, SCHEMA_VERSION } from './database.ts'
+import { DATABASE_NAME, DEV_DATABASE_NAME, deleteDatabase, SCHEMA_VERSION } from './database.ts'
 import { createRepository, type DexieRepository } from './repository.ts'
 
 let counter = 0
@@ -187,5 +187,26 @@ describe('schema version', () => {
     )
     raw.close()
     expect(DATABASE_NAME).toBe('morning-routine')
+  })
+})
+
+describe('development database', () => {
+  it('has its own name and deleteDatabase removes only the named database', async () => {
+    expect(DEV_DATABASE_NAME).toBe('morning-routine-dev')
+    expect(DEV_DATABASE_NAME).not.toBe(DATABASE_NAME)
+
+    const real = createRepository(`test-db-real-${++counter}`)
+    const dev = createRepository(`test-db-dev-${counter}`)
+    opened.push(real, dev)
+    await real.putChild({ id: 'c1', name: 'Noor' })
+    await dev.putChild({ id: 'c2', name: 'Lars' })
+    dev.close()
+
+    await deleteDatabase(`test-db-dev-${counter}`)
+
+    expect((await real.listChildren()).map((child) => child.name)).toEqual(['Noor'])
+    const reopened = createRepository(`test-db-dev-${counter}`)
+    opened.push(reopened)
+    expect(await reopened.listChildren()).toEqual([])
   })
 })

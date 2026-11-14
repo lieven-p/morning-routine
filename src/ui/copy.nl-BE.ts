@@ -9,6 +9,8 @@ export const copy = {
   },
   kids: {
     countdown: (minutes: number) => `nog ${minutes} min`,
+    // Small print for parents under a child's speeltijd sun; the children see no minutes.
+    playtimeLeft: (minutes: number) => `nog ${minutes} min`,
     companions: {
       egel: 'egel',
       muis: 'muis',

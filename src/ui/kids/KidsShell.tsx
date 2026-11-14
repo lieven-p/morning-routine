@@ -6,6 +6,7 @@ import { createSessionCommands } from '../../app/session-commands.ts'
 import { localDateString } from '../../domain/dates.ts'
 import { useAppServices } from '../app-context.ts'
 import { CalmScreen } from './CalmScreen.tsx'
+import { DepartureScreen } from './DepartureScreen.tsx'
 import { ScaledCanvas } from './ScaledCanvas.tsx'
 import { SessionScreen } from './SessionScreen.tsx'
 import { StartScreen } from './StartScreen.tsx'
@@ -17,7 +18,7 @@ const ignoreFailure = (command: Promise<void>): void => {
   command.catch((error: unknown) => console.error('Session command failed', error))
 }
 
-/** The children's side: start, session path and calm screen. It reads live data and only issues session commands (AD-10). */
+/** The children's side: start, session path, departure and calm screen. It reads live data and only issues session commands (AD-10). */
 export function KidsShell() {
   const { repository, clock } = useAppServices()
   const now = useNow(clock)
@@ -39,7 +40,11 @@ export function KidsShell() {
           now={now}
           onTick={(stoneId) => ignoreFailure(commands.tickStone(stoneId))}
           onUntick={(stoneId) => ignoreFailure(commands.untickStone(stoneId))}
+          onStartTimer={(stoneId) => ignoreFailure(commands.startTimer(stoneId))}
         />
+      )}
+      {screen?.kind === 'departure' && (
+        <DepartureScreen snapshot={screen.snapshot} view={screen.view} onDeparted={() => ignoreFailure(commands.departed())} />
       )}
       {screen?.kind === 'calm' && <CalmScreen companionId={screen.companionId} />}
     </ScaledCanvas>

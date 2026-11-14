@@ -22,8 +22,18 @@
   --label-bg: #fffaec;
   --sun-gold: #ffc94a;
   --sun-gold-dark: #c99a1e;
+  --sun-gold-pale: #f2d58a;
+  --gold-halo: #ffe7a3;
   --play-icon: #5a3e1b;
+  --water: #7cc6e8;
+  --rug-light: #fbe6cb;
+  --rug: #f2c99a;
+  --rug-border: #e39e6b;
+  --filler-stone: #c9c2b3;
+  --filler-stone-ledge: #9b9483;
+  --rainbow-red: #e5533d;
   --parent-meta: #5a6f55;
+  --parent-hint: #5e6e59;
   --white: #ffffff;
   --rounded-sm: 8px;
   --rounded-md: 10px;
@@ -234,8 +244,16 @@
   font-size: 25px;
 }
 
+.kids-slot {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
 .kids-stone {
   position: absolute;
+  left: 0;
+  top: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -245,11 +263,39 @@
   background: radial-gradient(circle at 40% 30%, var(--stone-highlight) 0, var(--stone) 60%, var(--stone-shade) 100%);
   box-shadow: 0 7px 0 var(--stone-ledge);
   font-size: 52px;
+  /* Lanes with more than five stones shrink their stones; buttons stay outside the scaled body (see below). */
+  transform: scale(var(--s, 1));
+  transform-origin: 0 0;
+}
+
+.kids-stone.running {
+  box-shadow:
+    0 7px 0 var(--stone-ledge),
+    0 0 36px 10px rgb(255 201 74 / 55%);
+}
+
+.kids-stone.reached {
+  box-shadow:
+    0 7px 0 var(--stone-ledge),
+    0 0 0 5px var(--gold-halo),
+    0 0 46px 18px rgb(255 201 74 / 95%);
 }
 
 .kids-stone.done {
   background: radial-gradient(circle at 40% 30%, var(--stone-done-light) 0, var(--stone-done) 70%);
   box-shadow: 0 7px 0 var(--flower-green);
+}
+
+/* A done stone is its own undo button: stretch the hit area to 48 CSS px on screen when the stone is small. */
+.kids-stone.done::after,
+.kids-dep-stone.done::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, calc(var(--hit-min, 48px) / var(--s, 1)));
+  height: max(100%, calc(var(--hit-min, 48px) / var(--s, 1)));
+  transform: translate(-50%, -50%);
 }
 
 .kids-stone-picture {
@@ -295,17 +341,31 @@
   line-height: 1;
 }
 
-/* The button is a transparent touch target, at least 48 CSS px on screen, centred on its green face. */
-.kids-done-button {
+/*
+ * The buttons are siblings of the scaled stone body, so they stay above the neighbouring stones. Each is a transparent
+ * touch target of at least 48 CSS px on screen, centred on its face; the face shrinks with the stone but not below 75 %.
+ */
+.kids-done-button,
+.kids-start-button {
   position: absolute;
-  left: 104px;
-  top: 8px;
   z-index: 5;
   display: grid;
   place-items: center;
-  width: max(52px, var(--hit-min, 48px));
-  height: max(52px, var(--hit-min, 48px));
   transform: translate(-50%, -50%);
+}
+
+.kids-done-button {
+  left: calc(104px * var(--s, 1));
+  top: calc(8px * var(--s, 1));
+  width: max(calc(52px * var(--btn, 1)), var(--hit-min, 48px));
+  height: max(calc(52px * var(--btn, 1)), var(--hit-min, 48px));
+}
+
+.kids-start-button {
+  left: calc(108px * var(--s, 1));
+  top: calc(84px * var(--s, 1));
+  width: max(calc(46px * var(--btn, 1)), var(--hit-min, 48px));
+  height: max(calc(46px * var(--btn, 1)), var(--hit-min, 48px));
 }
 
 .kids-done-face {
@@ -319,6 +379,384 @@
   border-radius: var(--rounded-lg);
   background: var(--flower-green);
   box-shadow: 0 4px 0 var(--forest);
+  transform: scale(var(--btn, 1));
+}
+
+.kids-done-face.halo {
+  box-shadow:
+    0 4px 0 var(--forest),
+    0 0 0 7px rgb(255 201 74 / 85%),
+    0 0 24px 8px rgb(255 201 74 / 70%);
+}
+
+.kids-start-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  box-sizing: border-box;
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  background: var(--sun-gold);
+  box-shadow: 0 4px 0 var(--sun-gold-dark);
+  transform: scale(var(--btn, 1));
+}
+
+.kids-start-face::before {
+  content: '';
+  margin-left: 4px;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 16px solid var(--play-icon);
+}
+
+.kids-ring {
+  position: absolute;
+  left: -12px;
+  top: -12px;
+  z-index: 1;
+  width: 128px;
+  height: 128px;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.kids-ring-track {
+  fill: none;
+  stroke: rgb(255 255 255 / 80%);
+  stroke-width: 9;
+}
+
+.kids-ring-arc {
+  fill: none;
+  stroke: var(--sun-gold);
+  stroke-width: 9;
+  stroke-linecap: round;
+  transition:
+    stroke-dasharray 1s linear,
+    stroke-dashoffset 1s linear;
+}
+
+.kids-ring.idle .kids-ring-arc {
+  stroke: var(--sun-gold-pale);
+}
+
+.kids-spark {
+  position: absolute;
+  z-index: 6;
+  font-size: 26px;
+  line-height: 1;
+  pointer-events: none;
+  animation: kids-twinkle 1.6s ease-in-out infinite alternate;
+}
+
+.kids-spark.late {
+  animation-delay: 0.8s;
+}
+
+@keyframes kids-twinkle {
+  from {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* The shared departure stones: a wide pill centred on its slot, growing about its centre at the nudge. */
+.kids-dep-stone {
+  position: absolute;
+  left: -66px;
+  top: -54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 132px;
+  height: 108px;
+  border-radius: 54px;
+  background: radial-gradient(circle at 40% 30%, var(--stone-highlight) 0, var(--stone) 60%, var(--stone-shade) 100%);
+  box-shadow: 0 7px 0 var(--stone-ledge);
+  font-size: 44px;
+  transform: scale(var(--s, 1));
+  transition:
+    transform 0.6s ease,
+    box-shadow 0.6s ease;
+}
+
+.kids-dep-stone.done {
+  background: radial-gradient(circle at 40% 30%, var(--stone-done-light) 0, var(--stone-done) 70%);
+  box-shadow: 0 7px 0 var(--flower-green);
+}
+
+.kids-dep-stone.grown {
+  z-index: 6;
+  box-shadow:
+    0 7px 0 var(--stone-ledge),
+    0 0 0 7px var(--sun-gold),
+    0 0 70px 30px rgb(255 201 74 / 95%);
+}
+
+.kids-dep-picture {
+  line-height: 1;
+}
+
+.kids-duo {
+  position: absolute;
+  left: 50%;
+  top: -16px;
+  display: flex;
+  gap: 4px;
+  transform: translateX(-50%);
+}
+
+.kids-duo-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  box-sizing: border-box;
+  border: 2px solid var(--wood-dark);
+  border-radius: 50%;
+  background: var(--cream);
+  font-size: 16px;
+  font-style: normal;
+  line-height: 1;
+}
+
+.kids-done-button.dep {
+  left: calc(50px * var(--s, 1));
+  top: calc(-38px * var(--s, 1));
+  transition:
+    left 0.6s ease,
+    top 0.6s ease;
+}
+
+.kids-slot.dep.grown .kids-done-button {
+  z-index: 7;
+}
+
+/* The indoor speeltijd rug (DESIGN.md, speeltijd-rug); it is part of the path from the start and fades at the nudge. */
+.kids-rug {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-sizing: border-box;
+  border: 5px solid var(--rug-border);
+  border-radius: 28px;
+  background:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 18%) 0 10px, transparent 10px 20px),
+    radial-gradient(circle at 50% 45%, var(--rug-light) 0, var(--rug) 100%);
+  box-shadow:
+    inset 0 0 0 4px var(--rug-light),
+    inset 0 0 0 6px var(--rug-border),
+    0 6px 0 rgb(122 82 53 / 35%);
+  text-align: center;
+  transition:
+    opacity 0.6s,
+    filter 0.6s;
+}
+
+.kids-rug.faded {
+  opacity: 0.35;
+  filter: grayscale(0.7);
+}
+
+.kids-rug-toys {
+  font-size: 27px;
+  line-height: 1.15;
+}
+
+.kids-rug-plank {
+  padding: 2px 10px;
+  border-radius: var(--rounded-md);
+  background: var(--wood);
+  color: var(--cream);
+  font-size: 14px;
+  box-shadow: 0 3px 0 var(--wood-dark);
+}
+
+.kids-rug-kids {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.kids-rug-kid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.kids-avatar.small {
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+}
+
+.kids-sun {
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border: 2px solid var(--white);
+  border-radius: 50%;
+}
+
+.kids-rug-minutes {
+  color: var(--parent-hint);
+  font-family: var(--font-parent);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.kids-rug-text {
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 1.1;
+}
+
+.kids-water {
+  fill: none;
+  stroke: var(--water);
+  stroke-width: 66;
+  stroke-linecap: round;
+}
+
+.kids-ripple {
+  fill: none;
+  stroke: var(--sky-horizon);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+.kids-bridge {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+}
+
+.kids-deck-plank {
+  border-radius: 3px;
+  background: var(--wood);
+  box-shadow: 0 3px 0 var(--wood-dark);
+}
+
+.kids-deck-empty {
+  box-sizing: border-box;
+  border: 2px dashed rgb(255 255 255 / 85%);
+}
+
+.kids-deck-filler {
+  align-self: center;
+  height: 65%;
+  border-radius: 5px;
+  background: var(--filler-stone);
+  box-shadow: 0 3px 0 var(--filler-stone-ledge);
+}
+
+.kids-rainbow {
+  position: absolute;
+  left: 810px;
+  top: 240px;
+  z-index: 2;
+  width: 180px;
+  height: 90px;
+  border-radius: 90px 90px 0 0;
+  background: radial-gradient(
+    circle at 50% 100%,
+    transparent 0 50px,
+    var(--water) 50px 58px,
+    var(--flower-green) 58px 66px,
+    var(--sun-gold) 66px 74px,
+    var(--rainbow-red) 74px 82px,
+    transparent 82px
+  );
+}
+
+.kids-rainbow.grow {
+  animation: kids-rainbow-grow 1.4s ease-out 0.2s both;
+}
+
+@keyframes kids-rainbow-grow {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.kids-crosser {
+  position: absolute;
+  z-index: 6;
+}
+
+.kids-crosser.crossing {
+  animation: kids-cross 2.6s ease-in-out var(--delay, 0s) both;
+}
+
+.kids-walker.crossing {
+  z-index: 6;
+  animation: kids-cross-walker 2.6s ease-in-out var(--delay, 0s) both;
+}
+
+@keyframes kids-cross {
+  0% {
+    transform: translate(var(--from-x), var(--from-y));
+  }
+  50% {
+    transform: translate(calc(var(--from-x) * 0.45), calc(var(--from-y) * 0.45 - 70px));
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes kids-cross-walker {
+  0% {
+    transform: translate(calc(-50% + var(--from-x)), var(--from-y));
+  }
+  50% {
+    transform: translate(calc(-50% + var(--from-x) * 0.45), calc(var(--from-y) * 0.45 - 70px));
+  }
+  100% {
+    transform: translate(-50%, 0);
+  }
+}
+
+.kids-confetti {
+  position: absolute;
+  z-index: 8;
+  font-size: 40px;
+  line-height: 1;
+  pointer-events: none;
+  animation: kids-confetti 2.6s ease-out 1.2s both;
+}
+
+@keyframes kids-confetti {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
 }
 
 .kids-tiles {
@@ -480,11 +918,131 @@
   border-left: 40px solid var(--play-icon);
 }
 
+/* The departure screen (children-session.html section 5). */
+.kids-departure-screen {
+  position: absolute;
+  inset: 0;
+}
+
+.kids-paths.faint {
+  opacity: 0.45;
+}
+
+.kids-banner {
+  position: absolute;
+  left: 50%;
+  top: 50px;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 36px;
+  border-radius: var(--rounded-xl);
+  background: var(--wood);
+  box-shadow: 0 8px 0 var(--wood-dark);
+  color: var(--cream);
+  font-size: 48px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.kids-big-car {
+  position: absolute;
+  left: 330px;
+  top: 190px;
+  z-index: 3;
+  font-size: 170px;
+  line-height: 1;
+}
+
+.kids-departure-companion {
+  position: absolute;
+  left: 600px;
+  top: 290px;
+  z-index: 4;
+  font-size: 88px;
+  line-height: 1;
+}
+
+.kids-wave {
+  position: absolute;
+  left: 690px;
+  top: 262px;
+  z-index: 4;
+  font-size: 44px;
+  line-height: 1;
+  transform-origin: 70% 80%;
+  animation: kids-wave 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes kids-wave {
+  from {
+    transform: rotate(-14deg);
+  }
+  to {
+    transform: rotate(18deg);
+  }
+}
+
+.kids-avatar.large {
+  position: absolute;
+  z-index: 4;
+  width: 72px;
+  height: 72px;
+  font-size: 40px;
+}
+
+.kids-strip {
+  position: absolute;
+  z-index: 2;
+  border-radius: var(--rounded-xl);
+  background: var(--water);
+}
+
+.kids-decor-flower {
+  position: absolute;
+  z-index: 3;
+  font-size: 34px;
+  line-height: 1;
+}
+
+/* Parent-only: small, dull grey system text with a faint border, so the children ignore it (DESIGN.md, parent-departed-button). */
+.kids-parent-departed {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 9;
+  padding: 4px 8px;
+  border: 1px solid rgb(47 74 43 / 28%);
+  border-radius: 7px;
+  background: rgb(255 255 255 / 30%);
+  color: var(--parent-hint);
+  font-family: var(--font-parent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .kids-hop,
   .kids-sparkle,
-  .kids-walker {
+  .kids-walker,
+  .kids-walker.crossing,
+  .kids-spark,
+  .kids-rainbow.grow,
+  .kids-crosser.crossing,
+  .kids-wave {
     animation: none;
     transition: none;
+  }
+
+  .kids-ring-arc,
+  .kids-dep-stone,
+  .kids-done-button.dep,
+  .kids-rug {
+    transition: none;
+  }
+
+  .kids-confetti {
+    display: none;
   }
 }

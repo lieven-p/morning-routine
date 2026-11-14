@@ -30,6 +30,10 @@ export const CAR = '🚗'
 export const SLEEPING = '💤'
 export const SPARKLES = '✨'
 export const NUDGE_FLAG = '👟🧥'
+export const TOYS_TOP = '🧸🧱📚'
+export const TOYS_BOTTOM = '🧩🏎️'
+export const WAVE = '👋'
+export const PARTY = '🎉'
 
 // Photos live in the media table (AD-7) and are shown once the parent screens can add them.
 function illustrationOf(picture: PictureRef | undefined, fallback: string): string {

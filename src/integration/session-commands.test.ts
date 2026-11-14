@@ -6,6 +6,7 @@ import { loadKidsData } from '../app/load-kids-data.ts'
 import { createSessionCommands } from '../app/session-commands.ts'
 import { seedSampleFamily } from '../app/sample-data.ts'
 import { localTimeMs } from '../domain/dates.ts'
+import { deriveSession } from '../domain/derive-session.ts'
 
 const MONDAY = '2026-11-16'
 const TUESDAY = '2026-11-17'
@@ -333,6 +334,143 @@ describe('screen choice over the stored data', () => {
     expect((await screenAt('07:20')).kind).toBe('start')
     await commands.startSession('konijn')
     expect((await screenAt('07:20')).kind).toBe('session')
-    expect(await screenAt('08:05')).toEqual({ kind: 'calm', companionId: 'konijn' })
+    expect(await screenAt('08:05')).toMatchObject({ kind: 'departure' })
+    expect(await screenAt('08:09')).toMatchObject({ kind: 'departure' })
+    expect(await screenAt('08:10')).toEqual({ kind: 'calm', companionId: 'konijn' })
+  })
+
+  it('switches from the departure screen to calm at once when the parent taps', async () => {
+    const { repository, commands, setTime } = await setup('07:20')
+    await commands.startSession('konijn')
+    setTime('08:06')
+    expect(chooseKidsScreen(await loadKidsData(repository, MONDAY), localTimeMs(MONDAY, '08:06')).kind).toBe('departure')
+    await commands.departed()
+    expect(chooseKidsScreen(await loadKidsData(repository, MONDAY), localTimeMs(MONDAY, '08:06'))).toEqual({
+      kind: 'calm',
+      companionId: 'konijn',
+    })
+  })
+})
+
+describe('startTimer', () => {
+  const setupRunning = async (time = '07:20') => {
+    const context = await setup(time)
+    await context.commands.startSession('konijn')
+    return context
+  }
+
+  it('appends timerStarted for a not-done timed stone of a running session', async () => {
+    const { repository, commands, setTime } = await setupRunning()
+    const tanden = await stoneIdByName(repository, MONDAY, 'Tanden poetsen', 'Zoon')
+    setTime('07:30')
+    await commands.startTimer(tanden)
+    const events = await repository.listEvents(MONDAY)
+    expect(events.map((event) => event.kind)).toEqual(['sessionStarted', 'timerStarted'])
+    expect(events[1]).toMatchObject({ stoneId: tanden, at: localTimeMs(MONDAY, '07:30') })
+  })
+
+  it('drops a second start, also after the time is reached', async () => {
+    const { repository, commands, setTime } = await setupRunning()
+    const tanden = await stoneIdByName(repository, MONDAY, 'Tanden poetsen', 'Zoon')
+    await commands.startTimer(tanden)
+    await commands.startTimer(tanden)
+    setTime('07:30')
+    await commands.startTimer(tanden)
+    expect(await repository.listEvents(MONDAY)).toHaveLength(2)
+  })
+
+  it('drops a stone without a guide time, a done stone and an unknown stone', async () => {
+    const { repository, commands } = await setupRunning()
+    const plassen = await stoneIdByName(repository, MONDAY, 'Plassen')
+    const tanden = await stoneIdByName(repository, MONDAY, 'Tanden poetsen', 'Dochter')
+    await commands.startTimer(plassen)
+    await commands.startTimer('nope')
+    await commands.tickStone(tanden)
+    await commands.startTimer(tanden)
+    expect((await repository.listEvents(MONDAY)).map((event) => event.kind)).toEqual(['sessionStarted', 'taskTicked'])
+  })
+
+  it('drops a departure stone even though it has a guide time', async () => {
+    const { repository, commands } = await setupRunning()
+    const schoenen = await stoneIdByName(repository, MONDAY, 'Schoenen aan')
+    await commands.startTimer(schoenen)
+    expect((await repository.listEvents(MONDAY)).map((event) => event.kind)).toEqual(['sessionStarted'])
+  })
+
+  it('allows a new start after an untick reset the timer', async () => {
+    const { repository, commands } = await setupRunning()
+    const tanden = await stoneIdByName(repository, MONDAY, 'Tanden poetsen', 'Zoon')
+    await commands.startTimer(tanden)
+    await commands.tickStone(tanden)
+    await commands.untickStone(tanden)
+    await commands.startTimer(tanden)
+    expect((await repository.listEvents(MONDAY)).map((event) => event.kind)).toEqual([
+      'sessionStarted',
+      'timerStarted',
+      'taskTicked',
+      'taskUnticked',
+      'timerStarted',
+    ])
+  })
+
+  it('drops everything without a session and at or after the cutoff', async () => {
+    const empty = await setup('07:20')
+    await empty.commands.startTimer('x')
+    expect(await empty.repository.listEvents(MONDAY)).toEqual([])
+
+    const { repository, commands, setTime } = await setupRunning()
+    const tanden = await stoneIdByName(repository, MONDAY, 'Tanden poetsen', 'Zoon')
+    setTime('08:05')
+    await commands.startTimer(tanden)
+    expect(await repository.listEvents(MONDAY)).toHaveLength(1)
+  })
+
+  it('writes one event for two taps fired together', async () => {
+    const { repository, commands } = await setupRunning()
+    const tanden = await stoneIdByName(repository, MONDAY, 'Tanden poetsen', 'Zoon')
+    await Promise.all([commands.startTimer(tanden), commands.startTimer(tanden)])
+    expect(await repository.listEvents(MONDAY)).toHaveLength(2)
+  })
+})
+
+describe('departed', () => {
+  it('stores one departedTapped for today', async () => {
+    const { repository, commands, setTime } = await setup('07:20')
+    await commands.startSession('konijn')
+    setTime('08:03')
+    await commands.departed()
+    await commands.departed()
+    const events = await repository.listEvents(MONDAY)
+    expect(events.map((event) => event.kind)).toEqual(['sessionStarted', 'departedTapped'])
+    expect(events[1]).toMatchObject({ at: localTimeMs(MONDAY, '08:03') })
+  })
+
+  it('stores a late tap without changing the derived view', async () => {
+    const { repository, commands, setTime } = await setup('07:20')
+    await commands.startSession('konijn')
+    const snapshot = (await repository.getSnapshot(MONDAY))!
+    const before = deriveSession(snapshot, await repository.listEvents(MONDAY), localTimeMs(MONDAY, '08:07'))
+    setTime('08:07')
+    await commands.departed()
+    const events = await repository.listEvents(MONDAY)
+    expect(events.map((event) => event.kind)).toEqual(['sessionStarted', 'departedTapped'])
+    const after = deriveSession(snapshot, events, localTimeMs(MONDAY, '08:07'))
+    expect(after).toEqual(before)
+    expect(after.timeline.departedAt).toBeNull()
+  })
+
+  it('does nothing without a snapshot for today', async () => {
+    const { repository, commands } = await setup('07:20')
+    await commands.departed()
+    expect(await repository.listEvents(MONDAY)).toEqual([])
+  })
+
+  it('does nothing when a tap is already stored for the date', async () => {
+    const { repository, commands, setTime } = await setup('07:20')
+    await commands.startSession('konijn')
+    await repository.appendEvent({ kind: 'departedTapped', date: MONDAY, at: localTimeMs(MONDAY, '08:00') })
+    setTime('08:01')
+    await commands.departed()
+    expect(await repository.listEvents(MONDAY)).toHaveLength(2)
   })
 })

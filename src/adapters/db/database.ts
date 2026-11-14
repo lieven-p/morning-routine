@@ -13,6 +13,14 @@ import type {
 
 export const DATABASE_NAME = 'morning-routine'
 
+/** The development clock (`?devNow=...`) works on this database, so the real one is never touched. */
+export const DEV_DATABASE_NAME = 'morning-routine-dev'
+
+/** Deletes a whole database by name; used for `devReset` before the repository opens it. */
+export function deleteDatabase(name: string): Promise<void> {
+  return Dexie.delete(name)
+}
+
 /** Equals the Dexie version and the backup `schemaVersion` (AD-8, AD-9). */
 export const SCHEMA_VERSION = 1
 

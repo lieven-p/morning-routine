@@ -93,6 +93,8 @@ export function companionFraction(timeline: Pick<SessionTimeline, 'startAt' | 'd
 
 export interface LaneLayout {
   plank: { left: number; top: number }
+  /** Size of every stone on the lane as a share of 104 px. */
+  scale: number
   /** Top-left of each stone, in snapshot order. */
   stones: { left: number; top: number }[]
 }
@@ -104,28 +106,62 @@ const FIRST_STONE_LEFT = 43
 const LAST_COMFORTABLE_LEFT = 450
 const MIN_STEP = 100
 const MAX_STEP = 125
+const ZIG = 30
+const STONE_CENTRE_OFFSET = 88 + STONE_SIZE / 2
+
+/** The speeltijd rug (DESIGN.md, speeltijd-rug): 150 px square, between the lanes and the departure stones. */
+export const RUG = { left: 560, top: 285, size: 150 } as const
+
+/** The right-most x a lane stone may reach: the lane never touches the rug. */
+const LANE_RIGHT_LIMIT = 550
+/** Stones per lane that fit at full size; above that they shrink. */
+export const FULL_SIZE_STONES = 5
+/** Stones per lane the layout is made for (two children). Longer lists are not supported until the routine editor caps them. */
+export const MAX_LANE_STONES = 8
+/** Distance between stone centres along a shrunken lane, as a share of the stone size. */
+const SHRUNK_STEP_RATIO = 0.96
+
+/** The size of the lane stones as a share of 104 px: 1 up to five stones, smaller above so the lane stays left of the rug. */
+export function laneStoneScale(stoneCount: number): number {
+  if (stoneCount <= FULL_SIZE_STONES) return 1
+  const room = LANE_RIGHT_LIMIT - FIRST_STONE_LEFT
+  return Math.min(1, room / (STONE_SIZE * ((stoneCount - 1) * SHRUNK_STEP_RATIO + 1)))
+}
 
 /** Where one child's plank and stones stand: lanes stacked, stones zig-zagging along the lane in order. */
 export function laneLayout(laneCount: number, laneIndex: number, stoneCount: number): LaneLayout {
   const height = laneCount <= 2 ? LANE_HEIGHT : Math.floor((CANVAS_HEIGHT - FIRST_PLANK_TOP - 20) / laneCount)
   const plankTop = FIRST_PLANK_TOP + (laneCount === 1 ? 60 : 0) + laneIndex * height
+  const scale = laneStoneScale(stoneCount)
+  const size = STONE_SIZE * scale
   const step =
-    stoneCount <= 1
-      ? MAX_STEP
-      : Math.min(MAX_STEP, Math.max(MIN_STEP, (LAST_COMFORTABLE_LEFT - FIRST_STONE_LEFT) / (stoneCount - 1)))
+    scale < 1
+      ? size * SHRUNK_STEP_RATIO
+      : stoneCount <= 1
+        ? MAX_STEP
+        : Math.min(MAX_STEP, Math.max(MIN_STEP, (LAST_COMFORTABLE_LEFT - FIRST_STONE_LEFT) / (stoneCount - 1)))
   return {
     plank: { left: 20, top: plankTop },
+    scale,
     stones: Array.from({ length: stoneCount }, (_unused, index) => ({
       left: Math.round(FIRST_STONE_LEFT + index * step),
-      top: plankTop + 88 + (index % 2) * 30,
+      // Stone centres stay on the same zig-zag line whatever the size.
+      top: Math.round(plankTop + STONE_CENTRE_OFFSET - size / 2 + (index % 2) * ZIG * scale),
     })),
   }
 }
 
-/** SVG path data through the stone centres of one lane, starting under its plank. */
-export function lanePath(layout: LaneLayout): string {
-  const half = STONE_SIZE / 2
+/** Where a lane runs into the rug: on its left edge, the lanes spread over the rug's height. */
+export function rugEntry(laneCount: number, laneIndex: number): Point {
+  return { x: RUG.left + 15, y: RUG.top + (RUG.size * (laneIndex + 1)) / (laneCount + 1) }
+}
+
+/** SVG path data through the stone centres of one lane, starting under its plank and ending at `end` (the rug) when given. */
+export function lanePath(layout: LaneLayout, end?: Point): string {
+  const half = (STONE_SIZE * layout.scale) / 2
   const points: Point[] = [{ x: 40, y: layout.plank.top + 54 }]
   for (const stone of layout.stones) points.push({ x: stone.left + half, y: stone.top + half })
+  if (end) points.push(end)
   return points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' ')
 }
+

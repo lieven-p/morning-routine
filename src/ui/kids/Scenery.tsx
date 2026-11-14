@@ -1,5 +1,6 @@
+import type { CSSProperties } from 'react'
 import { companionPicture, CAR, NUDGE_FLAG, SLEEPING } from './pictures.ts'
-import { trailPath, trailPoint } from './trail.ts'
+import { trailPath, trailPoint, type Point } from './trail.ts'
 
 /** Sand trail with white dots across the top, ending at the car; optionally the gold departure segment. */
 export function TrailPaths({ departureFrom }: { departureFrom?: number }) {
@@ -26,11 +27,30 @@ export function NudgeFlag({ fraction }: { fraction: number }) {
   )
 }
 
-/** The companion standing on the trail; `asleep` lays it down with a sleeping mark. */
-export function Companion({ companionId, fraction, asleep }: { companionId: string; fraction: number; asleep?: boolean }) {
+/**
+ * The companion standing on the trail; `asleep` lays it down with a sleeping mark. With `crossing` it skips in from
+ * `from` (an offset from where it stands) to its place at the car, after `delay` seconds, once.
+ */
+export function Companion({
+  companionId,
+  fraction,
+  asleep,
+  crossing,
+}: {
+  companionId: string
+  fraction: number
+  asleep?: boolean
+  crossing?: { from: Point; delay: number }
+}) {
   const point = trailPoint(fraction)
+  const className = ['kids-walker', asleep ? 'asleep' : '', crossing ? 'crossing' : ''].filter(Boolean).join(' ')
+  const style = {
+    left: point.x,
+    top: point.y - 48,
+    ...(crossing ? { '--from-x': `${crossing.from.x}px`, '--from-y': `${crossing.from.y}px`, '--delay': `${crossing.delay}s` } : {}),
+  } as CSSProperties
   return (
-    <span className={asleep ? 'kids-walker asleep' : 'kids-walker'} style={{ left: point.x, top: point.y - 48 }}>
+    <span className={className} style={style}>
       <span className="kids-walker-animal">{companionPicture(companionId)}</span>
       {asleep && <span className="kids-sleep">{SLEEPING}</span>}
     </span>

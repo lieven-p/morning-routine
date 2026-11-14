@@ -19,9 +19,14 @@ interface StoneProgress {
   timerStartedAt: number | null
 }
 
-function guideMs(stone: Stone): number {
+/** True when a stone has a usable guide time: finite and above zero. The one rule for task timers (UI, commands, derivation). */
+export function hasGuideTime(stone: Pick<Stone, 'guideMinutes'>): boolean {
   const minutes = stone.guideMinutes
-  return minutes !== undefined && Number.isFinite(minutes) && minutes > 0 ? minutes * MINUTE_MS : 0
+  return minutes !== undefined && Number.isFinite(minutes) && minutes > 0
+}
+
+function guideMs(stone: Stone): number {
+  return hasGuideTime(stone) ? stone.guideMinutes! * MINUTE_MS : 0
 }
 
 function stoneState(stone: Stone, progress: StoneProgress, now: number): StoneState {

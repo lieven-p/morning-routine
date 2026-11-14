@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { localTimeMs } from './dates.ts'
-import { deriveSession } from './derive-session.ts'
+import { deriveSession, hasGuideTime } from './derive-session.ts'
 import type { DaySnapshot, SessionEvent, SessionView, Stone } from './types.ts'
 
 const DATE = '2026-11-16'
@@ -61,6 +61,23 @@ const statusOf = (view: SessionView, stoneId: string) =>
 
 const cueIds = (view: SessionView) => view.cues.map((cue) => cue.id)
 const lane = (view: SessionView, childId: string) => view.children.find((child) => child.childId === childId)!
+
+describe('hasGuideTime', () => {
+  it.each([
+    [undefined, false],
+    [0, false],
+    [-1, false],
+    [Number.NaN, false],
+    [Number.POSITIVE_INFINITY, false],
+    [0.5, true],
+    [2, true],
+  ])('guideMinutes %s gives %s, in step with the timer derivation', (guideMinutes, expected) => {
+    const stoneWith = { ...stone('t1', { kind: 'child', childId: 'a' }), ...(guideMinutes === undefined ? {} : { guideMinutes }) }
+    expect(hasGuideTime(stoneWith)).toBe(expected)
+    const view = deriveSession(makeSnapshot({ stones: [stoneWith] }), [started(), timer('t1', '07:10')], at('07:11'))
+    expect(statusOf(view, 't1')?.status !== 'notStarted').toBe(expected)
+  })
+})
 
 describe('deriveSession', () => {
   it('not started: no events', () => {

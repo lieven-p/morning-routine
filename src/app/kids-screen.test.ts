@@ -101,9 +101,33 @@ describe('chooseKidsScreen with a snapshot', () => {
     expect(screen.kind === 'session' && screen.view.phase).toBe('departure')
   })
 
-  it('shows calm with the picked companion once ended', () => {
-    const screen = chooseKidsScreen(data(MONDAY, { snapshot: snapshot(MONDAY), events: started(MONDAY, 'uil') }), at(MONDAY, '08:05'))
-    expect(screen).toEqual({ kind: 'calm', companionId: 'uil' })
+  it('shows the departure screen once ended, for five minutes after the cutoff, with the picked companion kept', () => {
+    const base = data(MONDAY, { snapshot: snapshot(MONDAY), events: started(MONDAY, 'uil') })
+    expect(chooseKidsScreen(base, at(MONDAY, '08:05')).kind).toBe('departure')
+    expect(chooseKidsScreen(base, at(MONDAY, '08:10') - 1).kind).toBe('departure')
+    expect(chooseKidsScreen(base, at(MONDAY, '08:10'))).toEqual({ kind: 'calm', companionId: 'uil' })
+    expect(chooseKidsScreen(base, at(MONDAY, '09:30')).kind).toBe('calm')
+    const screen = chooseKidsScreen(base, at(MONDAY, '08:06'))
+    expect(screen.kind === 'departure' && screen.view.phase).toBe('ended')
+  })
+
+  it('shows the departure screen when stones are open and when everything is done', () => {
+    const done: SessionEvent[] = [
+      ...started(MONDAY),
+      { kind: 'taskTicked', date: MONDAY, at: at(MONDAY, '07:20'), seq: 2, stoneId: 'plassen' },
+      { kind: 'taskTicked', date: MONDAY, at: at(MONDAY, '07:21'), seq: 3, stoneId: 'jas' },
+    ]
+    expect(chooseKidsScreen(data(MONDAY, { snapshot: snapshot(MONDAY), events: done }), at(MONDAY, '08:06')).kind).toBe('departure')
+    expect(chooseKidsScreen(data(MONDAY, { snapshot: snapshot(MONDAY), events: started(MONDAY) }), at(MONDAY, '08:06')).kind).toBe('departure')
+  })
+
+  it('shows calm at once for any stored departed tap, early or late', () => {
+    const tap = (time: string, seq = 2): SessionEvent => ({ kind: 'departedTapped', date: MONDAY, at: at(MONDAY, time), seq })
+    const late = data(MONDAY, { snapshot: snapshot(MONDAY), events: [...started(MONDAY), tap('08:06')] })
+    expect(chooseKidsScreen(late, at(MONDAY, '08:07')).kind).toBe('calm')
+    const early = data(MONDAY, { snapshot: snapshot(MONDAY), events: [...started(MONDAY), tap('08:00')] })
+    expect(chooseKidsScreen(early, at(MONDAY, '08:00')).kind).toBe('calm')
+    expect(chooseKidsScreen(early, at(MONDAY, '08:06')).kind).toBe('calm')
   })
 
   it('shows calm after a parent tapped departed early', () => {
