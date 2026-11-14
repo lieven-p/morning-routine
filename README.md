@@ -13,7 +13,7 @@ Node `^24.0.0 || >=26.0.0` (`.nvmrc` pins 26).
 | `npm ci` | Install from the lockfile |
 | `npm run dev` | Vite dev server |
 | `npm run lint` | oxlint, including the layer rules in `.oxlintrc.json` |
-| `npm test` | Checks that the layer rules and the precache check reject violations (run after `npm run build`) |
+| `npm test` | Vitest (repository and device adapters, against `fake-indexeddb`) and the script checks that the layer rules and the precache check reject violations (run after `npm run build`) |
 | `npm run build` | Type-check, build to `dist/`, then check that every file in `public/` is in the service worker precache |
 | `npm run preview` | Serve `dist/` to try the installed/offline behaviour |
 
@@ -24,6 +24,8 @@ If `npm install` aborts with `ECONNRESET` behind a registry mirror, use `--maxso
 `src/domain` (pure rules), `src/app` (commands, queries, ports), `src/adapters` (browser APIs), `src/ui` (`kids`, `parent`). Imports are relative and the lint rules reject layer violations, `dexie` outside `src/adapters/db`, and `ui/kids` importing `ui/parent`.
 
 All fixed text comes from `src/ui/copy.nl-BE.ts`.
+
+Persistence goes through the `Repository` port in `src/app/ports.ts`; its Dexie implementation lives in `src/adapters/db/` (schema version 1, database `morning-routine`).
 
 ## Deploy
 

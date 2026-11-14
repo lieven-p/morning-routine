@@ -26,7 +26,12 @@ const violations = [
   ['app imports ui', 'src/app/__probe__.ts', "import '../ui/x'\nexport {}\n"],
   ['adapters import ui', 'src/adapters/media/__probe__.ts', "import '../../ui/x'\nexport {}\n"],
   ['dexie outside adapters/db', 'src/ui/__probe__.ts', "import 'dexie'\nexport {}\n"],
+  ['dexie in app', 'src/app/__probe__.ts', "import 'dexie'\nexport {}\n"],
+  ['dexie in adapters/device', 'src/adapters/device/__probe__.ts', "import 'dexie'\nexport {}\n"],
   ['kids import parent', 'src/ui/kids/__probe__.ts', "import '../parent/x'\nexport {}\n"],
+  ['domain file imports vitest', 'src/domain/__probe__.ts', "import 'vitest'\nexport {}\n"],
+  ['domain test imports app', 'src/domain/__probe__.test.ts', "import '../app/x'\nexport {}\n"],
+  ['domain test imports dexie', 'src/domain/__probe__.test.ts', "import 'dexie'\nexport {}\n"],
 ]
 
 for (const [name, file, source] of violations) {
@@ -47,6 +52,8 @@ const allowed = [
     "import '../../app/x'\nimport '../../domain/y'\nexport {}\n",
   ],
   ['app imports domain', 'src/app/__probe__.ts', "import '../domain/x'\nexport {}\n"],
+  ['domain test imports vitest', 'src/domain/__probe__.test.ts', "import 'vitest'\nexport {}\n"],
+  ['domain test imports domain', 'src/domain/__probe__.test.ts', "import './x'\nexport {}\n"],
 ]
 
 for (const [name, file, source] of allowed) {

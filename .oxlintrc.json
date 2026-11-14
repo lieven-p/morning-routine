@@ -43,6 +43,28 @@
       }
     },
     {
+      "files": ["src/domain/**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "dexie",
+                "message": "Only src/adapters/db may import dexie (AD-2)."
+              }
+            ],
+            "patterns": [
+              {
+                "regex": "^(\\.\\./)+(app|adapters|ui)(/|$)",
+                "message": "domain imports only domain (AD-19)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["src/app/**"],
       "rules": {
         "no-restricted-imports": [
